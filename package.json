@@ -1,0 +1,36 @@
+{
+  "name": "sourstore",
+  "version": "0.1.0",
+  "description": "A lightweight state management library for Soursop",
+  "type": "module",
+  "main": "dist/index.js",
+  "unpkg": "dist/sourstore.iife.js",
+  "jsdelivr": "dist/sourstore.iife.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "rollup -c"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/natanfeitosa/sourstore.git"
+  },
+  "keywords": [
+    "soursop",
+    "store",
+    "ts",
+    "state",
+    "functional"
+  ],
+  "author": "Natan Feitosa <natansantosapps@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/natanfeitosa/sourstore/issues"
+  },
+  "homepage": "https://github.com/natanfeitosa/sourstore#readme",
+  "devDependencies": {
+    "rollup": "^3.17.2",
+    "rollup-plugin-dts": "^5.2.0",
+    "rollup-plugin-esbuild": "^5.0.0",
+    "soursop": "^0.4.0"
+  }
+}
