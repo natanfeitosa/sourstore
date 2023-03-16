@@ -28,6 +28,14 @@ export default [
   }),
   makeConfig({
     output: {
+      file: 'dist/sourstore.esm.js',
+      exports: 'named',
+      format: 'es',
+    },
+    plugins: [esbuildPlugin],
+  }),
+  makeConfig({
+    output: {
       file: 'dist/sourstore.cjs.js',
       format: 'cjs',
       exports: 'named',
