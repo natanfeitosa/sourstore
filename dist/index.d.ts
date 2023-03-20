@@ -7,9 +7,12 @@ type GettersStore<G> = {
 type ActionsStore<A> = {
     [k in keyof A]: A[k] extends (...args: infer P) => infer R ? (...args: P) => R : never;
 };
-type Store<S extends _StatesTree = {}, G = {}, A = {}> = S & GettersStore<G> & ActionsStore<A>;
+type Store<S extends _StatesTree = {}, G = {}, A = {}> = S & GettersStore<G> & ActionsStore<A> & {
+    $states: S;
+    $subscribe: () => () => boolean;
+};
 interface defineStoreArgs<S extends _StatesTree, G, A> {
-    states: S;
+    state: () => S;
     getters?: G & ThisType<S & GettersStore<G>> & _GettersTree<S>;
     actions?: A & ThisType<S & GettersStore<G>>;
 }

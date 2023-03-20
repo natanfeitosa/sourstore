@@ -12,56 +12,49 @@ export function defineStore<
   G extends _GettersTree<S> = {},
   A extends _ActionsTree = {}
 >(options: defineStoreArgs<S, G, A>) {
-  const store = {} as Store<S, G, A>
-  const subs: Set<Function> = new Set()
+  let state = options.state()
+  const subscribers = new Set<() => void>()
 
-  const states = new Proxy(options.states, {
-    set(obj, prop, value) {
-      //@ts-ignore
-      obj[prop] = value
-      subs.forEach(s => s())
-      subs.clear()
-      return true
-    }
-  })
+  const getters = options.getters
+  const actions = options.actions
 
-  Object.defineProperties(
-    store,
-    Object.keys(states).reduce((acc, cur) => {
-      //@ts-ignore
-      acc[cur] = {
-        set(v: unknown) {
-          //@ts-ignore
-          states[cur] = v
-        },
-        get: () => states[cur]
+  const internals = {
+    $subscribe(sub: () => void) {
+      subscribers.add(sub)
+      return () => subscribers.delete(sub)
+    },
+    $states: state
+  }
+
+  const store = new Proxy({}, {
+    get(target, prop: string) {
+      if (prop.startsWith('$')) {
+        return internals[prop as keyof typeof internals]
       }
-
-      return acc
-    }, {})
-  )
-
-  if(options.actions) {
-    Object.entries(options.actions).forEach(([name, action]) => {
-      Object.assign(store, { [name]: action.bind(store) })
-    })
-  }
-
-  if (options.getters) {
-    Object.entries(options.getters).forEach(([name, getter]) => {
-      Object.defineProperty(store, name, {
-        get: () => getter.call(store, states),
-        set(a) {
-          throw TypeError('you cannot assign values to this property, it is read-only')
-        }
-      })
-    })
-  }
+      if (actions && prop in actions) {
+        return actions[prop as keyof A].bind(store)
+      }
+      if (getters && prop in getters) {
+        return getters[prop].call(store, state)
+      }
+      return state[prop as keyof S]
+    },
+    set(target, prop: string, value: any) {
+      if(!(prop in state)) {
+        return false
+      }
+      
+      state[prop as keyof S] = value
+      subscribers.forEach((callback) => callback())
+      subscribers.clear()
+      return true
+    },
+  }) as Store<S, G, A>
 
   return () => {
     const updater = useState(null)[1]
-    subs.add(updater)
-    onUnmounted(() => subs.delete(updater))
+    const removeSub = internals.$subscribe(() => updater(null))
+    onUnmounted(removeSub)
     return store
   }
 }

@@ -23,11 +23,14 @@ type ActionsStore<A> = {
 export type Store<
   S extends _StatesTree = {},
   G /* extends _GettersTree<S> */ = {},
-  A /* extends _ActionsTree */ = {}
-> = S & GettersStore<G> & ActionsStore<A>
+  A /* extends _ActionsTree<S> */ = {}
+> = S & GettersStore<G> & ActionsStore<A> & {
+  $states: S
+  $subscribe: () => () => boolean
+}
 
 export interface defineStoreArgs<S extends _StatesTree, G, A> {
-  states: S
+  state: () => S
   getters?: G & ThisType<S & GettersStore<G>> & _GettersTree<S>
   actions?: A & ThisType<S & GettersStore<G>>
 }

@@ -5,47 +5,44 @@ Object.defineProperty(exports, '__esModule', { value: true });
 var soursop = require('soursop');
 
 function defineStore(options) {
-  const store = {};
-  const subs = /* @__PURE__ */ new Set();
-  const states = new Proxy(options.states, {
-    set(obj, prop, value) {
-      obj[prop] = value;
-      subs.forEach((s) => s());
-      subs.clear();
+  let state = options.state();
+  const subscribers = /* @__PURE__ */ new Set();
+  const getters = options.getters;
+  const actions = options.actions;
+  const internals = {
+    $subscribe(sub) {
+      subscribers.add(sub);
+      return () => subscribers.delete(sub);
+    },
+    $states: state
+  };
+  const store = new Proxy({}, {
+    get(target, prop) {
+      if (prop.startsWith("$")) {
+        return internals[prop];
+      }
+      if (actions && prop in actions) {
+        return actions[prop].bind(store);
+      }
+      if (getters && prop in getters) {
+        return getters[prop].call(store, state);
+      }
+      return state[prop];
+    },
+    set(target, prop, value) {
+      if (!(prop in state)) {
+        return false;
+      }
+      state[prop] = value;
+      subscribers.forEach((callback) => callback());
+      subscribers.clear();
       return true;
     }
   });
-  Object.defineProperties(
-    store,
-    Object.keys(states).reduce((acc, cur) => {
-      acc[cur] = {
-        set(v) {
-          states[cur] = v;
-        },
-        get: () => states[cur]
-      };
-      return acc;
-    }, {})
-  );
-  if (options.actions) {
-    Object.entries(options.actions).forEach(([name, action]) => {
-      Object.assign(store, { [name]: action.bind(store) });
-    });
-  }
-  if (options.getters) {
-    Object.entries(options.getters).forEach(([name, getter]) => {
-      Object.defineProperty(store, name, {
-        get: () => getter.call(store, states),
-        set(a) {
-          throw TypeError("you cannot assign values to this property, it is read-only");
-        }
-      });
-    });
-  }
   return () => {
     const updater = soursop.useState(null)[1];
-    subs.add(updater);
-    soursop.onUnmounted(() => subs.delete(updater));
+    const removeSub = internals.$subscribe(() => updater(null));
+    soursop.onUnmounted(removeSub);
     return store;
   };
 }
