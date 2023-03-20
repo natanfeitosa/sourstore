@@ -43,8 +43,6 @@ You can create a small app using **babel cdn**
 ```html
 <div id="app"></div>
 <!-- Load Soursop -->
-<div id="app"></div>
-<!-- Load Soursop -->
 <script src="https://cdn.jsdelivr.net/npm/soursop"></script>
 <Script src="https://cdn.jsdelivr.net/npm/sourstore"></script>
 <!-- Load Babel -->
