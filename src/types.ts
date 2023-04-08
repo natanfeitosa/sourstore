@@ -34,3 +34,4 @@ export interface defineStoreArgs<S extends _StatesTree, G, A> {
   getters?: G & ThisType<S & GettersStore<G>> & _GettersTree<S>
   actions?: A & ThisType<S & GettersStore<G>>
 }
+
