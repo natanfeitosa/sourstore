@@ -31,17 +31,18 @@ var sourstore = (function (exports, soursop) {
           return false;
         }
         state[prop] = value;
-        subscribers.forEach((callback) => callback());
-        subscribers.clear();
+        subscribers.forEach((callback) => callback(state, prop, value));
         return true;
       }
     });
-    return () => {
+    function useStore() {
       const updater = soursop.useState(null)[1];
       const removeSub = internals.$subscribe(() => updater(null));
       soursop.onUnmounted(removeSub);
+      soursop.onUpdated(removeSub);
       return store;
-    };
+    }
+    return Object.assign(useStore, internals);
   }
 
   exports.defineStore = defineStore;

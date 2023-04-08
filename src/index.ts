@@ -1,10 +1,12 @@
-import { useState, onUnmounted } from 'soursop'
+import { useState, onUnmounted, onUpdated } from 'soursop'
 import {
   _StatesTree,
   _GettersTree,
   _ActionsTree,
   defineStoreArgs,
-  Store
+  Store,
+  SubsCallback,
+  defineStoreReturn
 } from './types'
 
 export function defineStore<
@@ -13,13 +15,13 @@ export function defineStore<
   A extends _ActionsTree = {}
 >(options: defineStoreArgs<S, G, A>) {
   let state = options.state()
-  const subscribers = new Set<() => void>()
+  const subscribers = new Set<SubsCallback<S>>()
 
   const getters = options.getters
   const actions = options.actions
 
   const internals = {
-    $subscribe(sub: () => void) {
+    $subscribe(sub: SubsCallback<S>) {
       subscribers.add(sub)
       return () => subscribers.delete(sub)
     },
@@ -45,16 +47,19 @@ export function defineStore<
       }
       
       state[prop as keyof S] = value
-      subscribers.forEach((callback) => callback())
-      subscribers.clear()
+      subscribers.forEach((callback) => callback(state, prop, value))
+      // subscribers.clear()
       return true
     },
   }) as Store<S, G, A>
 
-  return () => {
+  function useStore() {
     const updater = useState(null)[1]
     const removeSub = internals.$subscribe(() => updater(null))
     onUnmounted(removeSub)
+    onUpdated(removeSub)
     return store
   }
+
+  return Object.assign(useStore, internals) as defineStoreReturn<S, G, A>
 }

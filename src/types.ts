@@ -20,14 +20,18 @@ type ActionsStore<A> = {
     : never
 }
 
+export type SubsCallback<S> = (target: S, prop: keyof S, value: any) => void
+
+export type Internals<S> = {
+  $states: S
+  $subscribe: (cb: SubsCallback<S>) => () => boolean
+}
+
 export type Store<
   S extends _StatesTree = {},
   G /* extends _GettersTree<S> */ = {},
   A /* extends _ActionsTree<S> */ = {}
-> = S & GettersStore<G> & ActionsStore<A> & {
-  $states: S
-  $subscribe: () => () => boolean
-}
+> = S & GettersStore<G> & ActionsStore<A> & Internals<S>
 
 export interface defineStoreArgs<S extends _StatesTree, G, A> {
   state: () => S
@@ -35,3 +39,8 @@ export interface defineStoreArgs<S extends _StatesTree, G, A> {
   actions?: A & ThisType<S & GettersStore<G>>
 }
 
+export type defineStoreReturn<
+  S extends _StatesTree,
+  G extends _GettersTree<S> = {},
+  A extends _ActionsTree = {}
+> = Internals<S> & (() => Store<S, G, A>)

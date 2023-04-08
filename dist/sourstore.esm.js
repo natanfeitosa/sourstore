@@ -1,4 +1,4 @@
-import { useState, onUnmounted } from 'soursop';
+import { useState, onUnmounted, onUpdated } from 'soursop';
 
 function defineStore(options) {
   let state = options.state();
@@ -30,17 +30,18 @@ function defineStore(options) {
         return false;
       }
       state[prop] = value;
-      subscribers.forEach((callback) => callback());
-      subscribers.clear();
+      subscribers.forEach((callback) => callback(state, prop, value));
       return true;
     }
   });
-  return () => {
+  function useStore() {
     const updater = useState(null)[1];
     const removeSub = internals.$subscribe(() => updater(null));
     onUnmounted(removeSub);
+    onUpdated(removeSub);
     return store;
-  };
+  }
+  return Object.assign(useStore, internals);
 }
 
 export { defineStore };
